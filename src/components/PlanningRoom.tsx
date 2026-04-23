@@ -9,6 +9,8 @@ import { EmojiPicker } from "./EmojiPicker";
 import { ThrowLayer } from "./ThrowLayer";
 import type { RoundRecord } from "../api";
 
+const EMOJI_KEY = "planningPoker.selectedEmoji";
+
 interface PlanningRoomProps {
   roomId: string;
   userName: string;
@@ -37,16 +39,16 @@ export function PlanningRoom({ roomId, userName, onLeave }: PlanningRoomProps) {
   const isCreator = room?.creatorName === userName;
   const userVote = votes?.find((v) => v.voterName === userName);
 
-  const [hoveredTarget, setHoveredTarget] = useState<string | null>(null);
-  const [shakeKey, setShakeKey] = useState(0);
-
-  const throwEmoji = (emoji: string) => {
-    if (!hoveredTarget) {
-      setShakeKey((k) => k + 1);
-      toast("Hover over a teammate first 🎯", { duration: 1500 });
-      return;
-    }
-    api().throwEmoji({ roomId, from: userName, to: hoveredTarget, emoji });
+  const [selectedEmoji, setSelectedEmoji] = useState<string>(() => {
+    if (typeof localStorage === "undefined") return "🎯";
+    return localStorage.getItem(EMOJI_KEY) || "🎯";
+  });
+  const changeEmoji = (e: string) => {
+    setSelectedEmoji(e);
+    localStorage.setItem(EMOJI_KEY, e);
+  };
+  const throwAt = (targetName: string) => {
+    api().throwEmoji({ roomId, from: userName, to: targetName, emoji: selectedEmoji });
   };
 
   const safeCall = (fn: () => Promise<unknown>, success?: string) => async () => {
@@ -81,35 +83,33 @@ export function PlanningRoom({ roomId, userName, onLeave }: PlanningRoomProps) {
     );
   }
 
-  const others = (votes ?? []).filter((v) => v.voterName !== userName);
   const completedHistory = (history ?? []).filter((r) => r.roundNumber < room.currentRound);
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="bg-white/90 backdrop-blur rounded-3xl shadow-xl p-5 border-2 border-white">
-        <div className="flex items-start justify-between gap-4">
+    <div className="space-y-6">
+      {/* Header card */}
+      <div className="bg-white/90 backdrop-blur rounded-3xl shadow-xl p-6 border-2 border-white">
+        <div className="flex items-start justify-between mb-4 gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-display font-bold text-slate-800">{room.name}</h1>
             <p className="text-sm text-slate-600">
               Round {room.currentRound} · Hosted by <span className="font-semibold">{room.creatorName}</span>
             </p>
-            <div className="mt-1">
-              <RoundTitleInput
-                roomId={roomId}
-                round={room.currentRound}
-                currentTitle={roundData?.title ?? ""}
-                isCreator={isCreator}
-              />
-            </div>
           </div>
-          <button onClick={onLeave} className="text-slate-500 hover:text-rose-600 font-semibold transition-colors">
+          <button onClick={onLeave} className="px-4 py-2 text-slate-500 hover:text-rose-600 font-semibold transition-colors">
             Leave ←
           </button>
         </div>
 
+        <RoundTitleInput
+          roomId={roomId}
+          round={room.currentRound}
+          currentTitle={roundData?.title ?? ""}
+          isCreator={isCreator}
+        />
+
         {isCreator && (
-          <div className="flex flex-col sm:flex-row gap-3 mt-4">
+          <div className="flex flex-col sm:flex-row gap-3 mt-5">
             {!room.isVoting ? (
               <button
                 onClick={safeCall(() => api().startVoting(roomId), "Let's vote! 🗳️")}
@@ -135,65 +135,62 @@ export function PlanningRoom({ roomId, userName, onLeave }: PlanningRoomProps) {
             )}
           </div>
         )}
-      </div>
 
-      {/* Poker table */}
-      <div className="bg-gradient-to-br from-emerald-50 via-violet-50 to-rose-50 rounded-3xl shadow-xl p-6 sm:p-8 border-2 border-white">
-        {/* Others at top */}
-        <div className="flex flex-wrap justify-center gap-4 sm:gap-6 mb-6 min-h-[100px]">
-          {others.length === 0 ? (
-            <div className="text-slate-400 italic text-sm py-6">Waiting for more players...</div>
-          ) : (
-            others.map((vote) => (
-              <ParticipantSeat
-                key={vote.id}
-                name={vote.voterName}
-                points={vote.points}
-                hasVoted={true}
-                isMe={false}
-                isVoting={room.isVoting}
-                isTarget={hoveredTarget === vote.voterName}
-                onHover={() => setHoveredTarget(vote.voterName)}
-              />
-            ))
-          )}
+        {/* Participants */}
+        <div className="mt-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-slate-700">
+              At the table ({votes?.length ?? 0})
+            </h3>
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${room.isVoting ? "bg-emerald-500 animate-pulse" : "bg-gray-400"}`} />
+              <span className="text-sm text-slate-600">{room.isVoting ? "Voting in progress" : "Waiting to start"}</span>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {!votes?.length && <p className="text-sm text-slate-400 italic">Nobody&rsquo;s picked a card yet...</p>}
+            {votes?.map((vote) => {
+              const isMe = vote.voterName === userName;
+              return (
+                <button
+                  key={vote.id}
+                  type="button"
+                  data-user-chip={vote.voterName}
+                  onClick={() => throwAt(vote.voterName)}
+                  title={`Throw ${selectedEmoji} at ${vote.voterName}`}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-all cursor-pointer hover:scale-110 hover:shadow-md active:scale-95 ${
+                    isMe
+                      ? "bg-violet-100 text-violet-800 border-violet-300"
+                      : "bg-slate-100 text-slate-700 border-slate-200 hover:border-violet-300"
+                  }`}
+                >
+                  {vote.voterName}
+                  {!room.isVoting ? (
+                    <span className="ml-2 px-2 py-0.5 bg-white rounded-full text-violet-700 font-bold">{vote.points}</span>
+                  ) : (
+                    <span className="ml-2">🎴</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Throw emoji toolbar */}
+          <div className="mt-4 pt-4 border-t border-slate-100 flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-semibold text-slate-600">Throw:</span>
+            <EmojiPicker selected={selectedEmoji} onChange={changeEmoji} />
+            {!!votes?.length && (
+              <span className="text-xs text-slate-400 italic">
+                tap a teammate above to launch {selectedEmoji}
+              </span>
+            )}
+          </div>
         </div>
-
-        {/* Central table */}
-        <CenterTable
-          isVoting={room.isVoting}
-          voteCount={votes?.length ?? 0}
-          stats={voteStats}
-          selectedScore={roundData?.selectedScore ?? null}
-          isCreator={isCreator}
-        />
-
-        {/* Me at bottom */}
-        <div className="flex justify-center mt-6">
-          <ParticipantSeat
-            name={userName}
-            points={userVote?.points}
-            hasVoted={!!userVote}
-            isMe={true}
-            isVoting={room.isVoting}
-            isTarget={hoveredTarget === userName}
-            onHover={() => setHoveredTarget(userName)}
-          />
-        </div>
       </div>
 
-      {/* Emoji picker bar */}
-      <div className="flex flex-col items-center gap-2">
-        <EmojiPicker onThrow={throwEmoji} shakeKey={shakeKey} />
-        <p className="text-xs text-slate-500 italic">
-          {hoveredTarget
-            ? <>Aiming at <span className="font-bold text-violet-600">{hoveredTarget}</span> — tap an emoji to throw</>
-            : "Hover over a player to aim, then tap an emoji"
-          }
-        </p>
-      </div>
+      <ThrowLayer roomId={roomId} />
 
-      {/* Voting cards or results */}
+      {/* Voting / results */}
       {room.isVoting ? (
         <VotingInterface fibonacci={FIBONACCI} selectedValue={userVote?.points} onVote={handleVote} />
       ) : votes && votes.length > 0 ? (
@@ -205,118 +202,19 @@ export function PlanningRoom({ roomId, userName, onLeave }: PlanningRoomProps) {
             api().selectScore(roomId, room.currentRound, score).catch(() => toast.error("Couldn't save score"))
           }
         />
-      ) : null}
-
-      {/* Round history */}
-      {completedHistory.length > 0 && <RoundHistory records={completedHistory} />}
-
-      <ThrowLayer roomId={roomId} />
-    </div>
-  );
-}
-
-/* ── Participant seat ─────────────────────────────────────────── */
-
-function ParticipantSeat({
-  name, points, hasVoted, isMe, isVoting, isTarget, onHover,
-}: {
-  name: string;
-  points?: number;
-  hasVoted: boolean;
-  isMe: boolean;
-  isVoting: boolean;
-  isTarget: boolean;
-  onHover: () => void;
-}) {
-  const revealed = !isVoting && hasVoted && points != null;
-
-  return (
-    <button
-      type="button"
-      onMouseEnter={onHover}
-      onFocus={onHover}
-      className="flex flex-col items-center gap-2 group cursor-crosshair focus:outline-none"
-    >
-      <div
-        data-user-chip={name}
-        className={`relative w-16 sm:w-20 rounded-xl flex items-center justify-center transition-all duration-200 transform-gpu ${
-          isTarget ? "scale-110 -translate-y-1" : "group-hover:scale-105"
-        } ${
-          revealed
-            ? "bg-gradient-to-br from-violet-500 via-fuchsia-500 to-rose-500 text-white font-display font-black text-3xl shadow-lg border-2 border-white"
-            : hasVoted
-              ? "bg-gradient-to-br from-violet-400 to-fuchsia-500 shadow-md border-2 border-white"
-              : "bg-white border-2 border-dashed border-slate-300"
-        } ${isTarget ? "ring-4 ring-violet-300/70 shadow-xl" : ""}`}
-        style={{ aspectRatio: "3/4" }}
-      >
-        {revealed && <span>{points}</span>}
-        {hasVoted && !revealed && (
-          <div className="absolute inset-2 rounded-md border-2 border-white/40" />
-        )}
-      </div>
-      <span className={`text-sm font-semibold ${isTarget ? "text-violet-600" : isMe ? "text-violet-700" : "text-slate-700"}`}>
-        {name}
-        {isMe && <span className="text-slate-400 font-normal"> (you)</span>}
-      </span>
-    </button>
-  );
-}
-
-/* ── Center table (status) ────────────────────────────────────── */
-
-function CenterTable({
-  isVoting, voteCount, stats, selectedScore, isCreator,
-}: {
-  isVoting: boolean;
-  voteCount: number;
-  stats: ReturnType<typeof useStats>;
-  selectedScore: number | null;
-  isCreator: boolean;
-}) {
-  let content: React.ReactNode;
-  if (isVoting) {
-    content = (
-      <div className="text-center">
-        <p className="text-xl sm:text-2xl font-display font-bold text-slate-700 mb-1">
-          Pick your cards!
-        </p>
-        <p className="text-sm text-slate-500">
-          {voteCount} {voteCount === 1 ? "vote" : "votes"} in
-        </p>
-      </div>
-    );
-  } else if (stats) {
-    const allSame = stats.totalVotes > 1 && stats.votes.every((v) => v.points === stats.votes[0].points);
-    content = (
-      <div className="text-center">
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
-          {allSame ? "🎯 Unanimous" : "Average"}
-        </p>
-        <p className="text-4xl sm:text-5xl font-display font-black text-violet-700">
-          {stats.average.toFixed(1)}
-        </p>
-        {selectedScore != null && (
-          <p className="text-xs text-slate-500 mt-2">
-            accepted: <span className="font-bold text-violet-700 text-base">{selectedScore}</span>
+      ) : (
+        <div className="bg-white/90 backdrop-blur rounded-3xl shadow-xl p-12 border-2 border-white text-center">
+          <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-4xl animate-pulse">⏳</span>
+          </div>
+          <p className="text-slate-700 font-display text-lg">
+            {isCreator ? 'Press "Start voting" when the team is ready' : "Waiting for the host to deal..."}
           </p>
-        )}
-      </div>
-    );
-  } else {
-    content = (
-      <div className="text-center">
-        <p className="text-4xl mb-2 opacity-60">⏳</p>
-        <p className="text-sm text-slate-500 font-display">
-          {isCreator ? 'Press "Start voting" when ready' : "Waiting for the host..."}
-        </p>
-      </div>
-    );
-  }
+        </div>
+      )}
 
-  return (
-    <div className="relative mx-auto max-w-md bg-white/80 backdrop-blur rounded-3xl py-8 px-6 border-2 border-white shadow-inner">
-      {content}
+      {/* History */}
+      {completedHistory.length > 0 && <RoundHistory records={completedHistory} />}
     </div>
   );
 }
@@ -338,7 +236,7 @@ function RoundTitleInput({
 
   if (!isCreator) {
     return currentTitle
-      ? <p className="text-slate-500 text-sm italic">"{currentTitle}"</p>
+      ? <p className="text-slate-500 text-sm italic mb-1">"{currentTitle}"</p>
       : null;
   }
 
@@ -352,13 +250,13 @@ function RoundTitleInput({
         onKeyDown={(e) => { if (e.key === "Enter") void commit(); if (e.key === "Escape") setEditing(false); }}
         maxLength={200}
         placeholder="What are we estimating?"
-        className="px-3 py-1.5 rounded-lg bg-white border-2 border-violet-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 outline-none transition-all text-slate-700 text-sm min-w-[240px]"
+        className="w-full mb-1 px-4 py-2 rounded-xl bg-slate-50 border-2 border-violet-300 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 outline-none transition-all text-slate-700 text-sm"
       />
     );
   }
 
   return (
-    <button onClick={() => { setDraft(currentTitle); setEditing(true); }} className="text-sm text-left group">
+    <button onClick={() => { setDraft(currentTitle); setEditing(true); }} className="block text-sm text-left mb-1 group">
       {currentTitle
         ? <span className="text-slate-500 italic">"{currentTitle}" <span className="opacity-0 group-hover:opacity-60 text-violet-400 text-xs transition-opacity">edit</span></span>
         : <span className="text-slate-400 hover:text-violet-400 transition-colors">+ Add a round title...</span>
