@@ -62,6 +62,10 @@ class WsSocket {
     else this.pending.push(serialized);
   }
 
+  sendRaw(msg: object) {
+    this.send(msg);
+  }
+
   subscribe(channel: Channel, handler: (e: Event) => void): () => void {
     let handlers = this.channels.get(channel);
     if (!handlers) {
@@ -132,6 +136,7 @@ export function createHttpClient(): ApiClient {
     getRoundData: (roomId, round) =>
       req<RoundData>(`/api/rooms/${roomId}/round-data?round=${round}`),
     getHistory: (roomId) => req<RoundRecord[]>(`/api/rooms/${roomId}/history`),
+    throwEmoji: (input) => socket.sendRaw({ type: "throw", ...input }),
     subscribe: (channel, handler) => socket.subscribe(channel, handler),
   };
 }

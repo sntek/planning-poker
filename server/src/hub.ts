@@ -4,7 +4,8 @@ export type WsData = { id: string; channels: Set<string> };
 export type Event =
   | { type: "rooms" }
   | { type: "room"; roomId: string }
-  | { type: "votes"; roomId: string };
+  | { type: "votes"; roomId: string }
+  | { type: "throw"; roomId: string; from: string; to: string; emoji: string };
 
 const clients = new Map<string, ServerWebSocket<WsData>>();
 
@@ -39,8 +40,8 @@ function channelFor(event: Event): string {
     case "rooms":
       return "rooms";
     case "room":
-      return `room:${event.roomId}`;
     case "votes":
+    case "throw":
       return `room:${event.roomId}`;
   }
 }

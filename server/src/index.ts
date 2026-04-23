@@ -3,7 +3,7 @@ import { existsSync, statSync } from "node:fs";
 import { extname, join, normalize } from "node:path";
 import { migrate } from "./migrate";
 import { handleApi } from "./routes";
-import { register, subscribe, unregister, unsubscribe, type WsData } from "./hub";
+import { broadcast, register, subscribe, unregister, unsubscribe, type WsData } from "./hub";
 
 const PORT = Number(process.env.PORT ?? 3001);
 const STATIC_DIR = process.env.STATIC_DIR;
@@ -98,11 +98,27 @@ const server = Bun.serve<WsData>({
         return;
       }
       if (!msg || typeof msg !== "object") return;
-      const m = msg as { type?: string; channel?: string };
+      const m = msg as {
+        type?: string;
+        channel?: string;
+        roomId?: string;
+        from?: string;
+        to?: string;
+        emoji?: string;
+      };
       if (m.type === "subscribe" && typeof m.channel === "string") {
         subscribe(ws, m.channel);
       } else if (m.type === "unsubscribe" && typeof m.channel === "string") {
         unsubscribe(ws, m.channel);
+      } else if (
+        m.type === "throw" &&
+        typeof m.roomId === "string" &&
+        typeof m.from === "string" &&
+        typeof m.to === "string" &&
+        typeof m.emoji === "string" &&
+        m.emoji.length <= 16
+      ) {
+        broadcast({ type: "throw", roomId: m.roomId, from: m.from, to: m.to, emoji: m.emoji });
       }
     },
   },
