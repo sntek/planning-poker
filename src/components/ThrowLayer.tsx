@@ -56,8 +56,11 @@ function ThrowAnimation({
     const el = ref.current;
     if (!el) return;
 
-    // Find target
-    const target = document.querySelector(`[data-user-chip="${CSS.escape(to)}"]`);
+    // Find target by attribute (robust against any username characters)
+    const allChips = document.querySelectorAll("[data-user-chip]");
+    const target = Array.from(allChips).find(
+      (el) => el.getAttribute("data-user-chip") === to,
+    );
     let targetX: number, targetY: number;
     if (target) {
       const rect = target.getBoundingClientRect();
