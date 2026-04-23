@@ -41,8 +41,7 @@ export type Channel = "rooms" | `room:${string}`;
 export type Event =
   | { type: "rooms" }
   | { type: "room"; roomId: string }
-  | { type: "votes"; roomId: string }
-  | { type: "throw"; roomId: string; from: string; to: string; emoji: string };
+  | { type: "votes"; roomId: string };
 
 export interface ApiClient {
   listRooms(): Promise<Room[]>;
@@ -59,6 +58,5 @@ export interface ApiClient {
   selectScore(roomId: string, round: number, score: number): Promise<void>;
   getRoundData(roomId: string, round: number): Promise<RoundData>;
   getHistory(roomId: string): Promise<RoundRecord[]>;
-  throwEmoji(input: { roomId: string; from: string; to: string; emoji: string }): void;
   subscribe(channel: Channel, handler: (event: Event) => void): () => void;
 }

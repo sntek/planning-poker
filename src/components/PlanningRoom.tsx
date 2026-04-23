@@ -5,11 +5,7 @@ import { api } from "../api";
 import { useHistory, useRoom, useRoundData, useStats, useVotes } from "../hooks/useRealtime";
 import { VotingInterface } from "./VotingInterface";
 import { ResultsDisplay } from "./ResultsDisplay";
-import { EmojiPicker } from "./EmojiPicker";
-import { ThrowLayer } from "./ThrowLayer";
 import type { RoundRecord } from "../api";
-
-const EMOJI_KEY = "planningPoker.selectedEmoji";
 
 interface PlanningRoomProps {
   roomId: string;
@@ -38,18 +34,6 @@ export function PlanningRoom({ roomId, userName, onLeave }: PlanningRoomProps) {
 
   const isCreator = room?.creatorName === userName;
   const userVote = votes?.find((v) => v.voterName === userName);
-
-  const [selectedEmoji, setSelectedEmoji] = useState<string>(() => {
-    if (typeof localStorage === "undefined") return "🎯";
-    return localStorage.getItem(EMOJI_KEY) || "🎯";
-  });
-  const changeEmoji = (e: string) => {
-    setSelectedEmoji(e);
-    localStorage.setItem(EMOJI_KEY, e);
-  };
-  const throwAt = (targetName: string) => {
-    api().throwEmoji({ roomId, from: userName, to: targetName, emoji: selectedEmoji });
-  };
 
   const safeCall = (fn: () => Promise<unknown>, success?: string) => async () => {
     try { await fn(); if (success) toast.success(success); }
@@ -152,16 +136,12 @@ export function PlanningRoom({ roomId, userName, onLeave }: PlanningRoomProps) {
             {votes?.map((vote) => {
               const isMe = vote.voterName === userName;
               return (
-                <button
+                <div
                   key={vote.id}
-                  type="button"
-                  data-user-chip={vote.voterName}
-                  onClick={() => throwAt(vote.voterName)}
-                  title={`Throw ${selectedEmoji} at ${vote.voterName}`}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-all cursor-pointer hover:scale-110 hover:shadow-md active:scale-95 ${
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-all ${
                     isMe
                       ? "bg-violet-100 text-violet-800 border-violet-300"
-                      : "bg-slate-100 text-slate-700 border-slate-200 hover:border-violet-300"
+                      : "bg-slate-100 text-slate-700 border-slate-200"
                   }`}
                 >
                   {vote.voterName}
@@ -170,25 +150,12 @@ export function PlanningRoom({ roomId, userName, onLeave }: PlanningRoomProps) {
                   ) : (
                     <span className="ml-2">🎴</span>
                   )}
-                </button>
+                </div>
               );
             })}
           </div>
-
-          {/* Throw emoji toolbar */}
-          <div className="mt-4 pt-4 border-t border-slate-100 flex items-center gap-3 flex-wrap">
-            <span className="text-sm font-semibold text-slate-600">Throw:</span>
-            <EmojiPicker selected={selectedEmoji} onChange={changeEmoji} />
-            {!!votes?.length && (
-              <span className="text-xs text-slate-400 italic">
-                tap a teammate above to launch {selectedEmoji}
-              </span>
-            )}
-          </div>
         </div>
       </div>
-
-      <ThrowLayer roomId={roomId} />
 
       {/* Voting / results */}
       {room.isVoting ? (
