@@ -152,7 +152,7 @@ export function PlanningRoom({ roomId, userName, onLeave }: PlanningRoomProps) {
         />
       ) : (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-12 text-center text-gray-400 text-sm">
-          {isCreator ? "Press "Start voting" when ready." : "Waiting for the host to start…"}
+          {isCreator ? 'Press "Start voting" when ready.' : "Waiting for the host to start\u2026"}
         </div>
       )}
 
