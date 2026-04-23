@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
-import type { Channel, Event, Room, Vote, VoteStats } from "../api";
+import type { Channel, Event, Room, RoundData, RoundRecord, Vote, VoteStats } from "../api";
 
 function useLiveFetch<T>(
   channels: Channel[] | null,
@@ -91,5 +91,29 @@ export function useStats(
     () =>
       roomId && round != null ? api().getStats(roomId, round) : Promise.resolve(null),
     [roomId, round],
+  );
+}
+
+export function useRoundData(
+  roomId: string | null,
+  round: number | null,
+): RoundData | undefined {
+  return useLiveFetch<RoundData>(
+    roomId ? [`room:${roomId}`] : null,
+    (e) => e.type === "room" && e.roomId === roomId,
+    () =>
+      roomId && round != null
+        ? api().getRoundData(roomId, round)
+        : Promise.resolve({ title: "", selectedScore: null }),
+    [roomId, round],
+  );
+}
+
+export function useHistory(roomId: string | null): RoundRecord[] | undefined {
+  return useLiveFetch<RoundRecord[]>(
+    roomId ? [`room:${roomId}`] : null,
+    (e) => (e.type === "room" || e.type === "votes") && e.roomId === roomId,
+    () => (roomId ? api().getHistory(roomId) : Promise.resolve([])),
+    [roomId],
   );
 }

@@ -13,15 +13,15 @@ export function NamePrompt({ onSubmit }: NamePromptProps) {
   };
 
   return (
-    <div className="bg-white/90 backdrop-blur rounded-3xl shadow-xl p-8 sm:p-10 border-2 border-white">
+    <div className="bg-emerald-900/80 backdrop-blur rounded-3xl shadow-2xl p-8 sm:p-10 border border-emerald-700/60">
       <div className="text-center mb-8">
-        <div className="w-20 h-20 bg-gradient-to-br from-violet-500 via-fuchsia-500 to-rose-500 rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg animate-wiggle">
+        <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg animate-wiggle">
           <span className="text-4xl">👋</span>
         </div>
-        <h2 className="text-3xl font-display font-bold text-slate-800 mb-2">
-          Welcome, friend!
+        <h2 className="text-3xl font-display font-bold text-amber-300 mb-2">
+          Welcome to the table!
         </h2>
-        <p className="text-slate-600">
+        <p className="text-emerald-300/80">
           What should your teammates call you?
         </p>
       </div>
@@ -33,15 +33,15 @@ export function NamePrompt({ onSubmit }: NamePromptProps) {
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. Wizard Gandalf"
           maxLength={40}
-          className="w-full px-5 py-4 rounded-2xl bg-slate-50 border-2 border-slate-200 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 outline-none transition-all text-lg"
+          className="w-full px-5 py-4 rounded-2xl bg-emerald-950/70 border-2 border-emerald-700 focus:border-amber-400 focus:ring-4 focus:ring-amber-400/20 outline-none transition-all text-lg text-amber-100 placeholder:text-emerald-600"
           autoFocus
         />
         <button
           type="submit"
           disabled={!name.trim()}
-          className="w-full px-6 py-4 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-rose-500 text-white font-display font-bold text-lg rounded-2xl hover:scale-[1.02] active:scale-95 transition-transform shadow-lg disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="w-full px-6 py-4 bg-gradient-to-r from-amber-400 to-yellow-500 text-emerald-950 font-display font-bold text-lg rounded-2xl hover:scale-[1.02] active:scale-95 transition-transform shadow-lg shadow-amber-500/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
-          Let&rsquo;s go! ✨
+          Take a seat ✨
         </button>
       </form>
     </div>

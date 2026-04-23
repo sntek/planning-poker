@@ -23,6 +23,19 @@ export type VoteStats = {
   votes: Array<{ voterName: string; points: number }>;
 };
 
+export type RoundRecord = {
+  roundNumber: number;
+  title: string;
+  selectedScore: number | null;
+  voteCount: number;
+  average: number | null;
+};
+
+export type RoundData = {
+  title: string;
+  selectedScore: number | null;
+};
+
 export type Channel = "rooms" | `room:${string}`;
 
 export type Event =
@@ -40,5 +53,10 @@ export interface ApiClient {
   startVoting(roomId: string): Promise<void>;
   stopVoting(roomId: string): Promise<void>;
   nextRound(roomId: string): Promise<void>;
+  deleteRoom(id: string): Promise<void>;
+  setRoundTitle(roomId: string, round: number, title: string): Promise<void>;
+  selectScore(roomId: string, round: number, score: number): Promise<void>;
+  getRoundData(roomId: string, round: number): Promise<RoundData>;
+  getHistory(roomId: string): Promise<RoundRecord[]>;
   subscribe(channel: Channel, handler: (event: Event) => void): () => void;
 }

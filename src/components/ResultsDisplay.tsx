@@ -1,14 +1,19 @@
 import type { VoteStats } from "../api";
 
+const FIBONACCI = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89];
+
 interface ResultsDisplayProps {
   stats: VoteStats | null | undefined;
+  selectedScore: number | null;
+  isCreator: boolean;
+  onSelectScore: (score: number) => void;
 }
 
-export function ResultsDisplay({ stats }: ResultsDisplayProps) {
+export function ResultsDisplay({ stats, selectedScore, isCreator, onSelectScore }: ResultsDisplayProps) {
   if (!stats) {
     return (
-      <div className="bg-white/90 backdrop-blur rounded-3xl shadow-xl p-12 border-2 border-white text-center">
-        <p className="text-slate-600">No cards in play yet.</p>
+      <div className="bg-emerald-900/60 rounded-2xl p-12 border border-emerald-700/50 text-center">
+        <p className="text-emerald-500">No votes yet.</p>
       </div>
     );
   }
@@ -19,84 +24,90 @@ export function ResultsDisplay({ stats }: ResultsDisplayProps) {
   const spread = sorted.length > 1 ? sorted[sorted.length - 1].points - sorted[0].points : 0;
 
   return (
-    <div className="bg-white/90 backdrop-blur rounded-3xl shadow-xl p-6 sm:p-8 border-2 border-white">
-      <h2 className="text-xl sm:text-2xl font-display font-bold text-slate-800 mb-1 text-center">
-        {allSame ? "🎯 Unanimous!" : "The reveal"}
-      </h2>
-      {allSame ? (
-        <p className="text-center text-emerald-600 font-medium mb-6">
-          The team is in perfect harmony.
-        </p>
-      ) : (
-        <p className="text-center text-slate-600 mb-6">
-          {spread >= 8 ? "Big disagreement — time to chat!" : "Close, but let's talk it through."}
-        </p>
-      )}
+    <div className="space-y-4">
+      {/* Stats */}
+      <div className="bg-emerald-900/60 rounded-2xl p-6 sm:p-8 border border-emerald-700/50">
+        <div className="text-center mb-5">
+          <h2 className="text-xl font-display font-bold text-amber-300 mb-1">
+            {allSame ? "🎯 Unanimous!" : "The reveal"}
+          </h2>
+          <p className="text-sm text-emerald-400">
+            {allSame
+              ? "Perfect consensus."
+              : spread >= 8
+              ? "Big spread — worth a discussion."
+              : "Pretty close!"}
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <StatCard
-          label="Average"
-          value={stats.average.toFixed(2)}
-          gradient="from-violet-100 to-violet-200"
-          accent="text-violet-700"
-        />
-        <StatCard
-          label="Round down"
-          value={String(stats.roundedDown)}
-          gradient="from-sky-100 to-sky-200"
-          accent="text-sky-700"
-        />
-        <StatCard
-          label="Round up"
-          value={String(stats.roundedUp)}
-          gradient="from-rose-100 to-rose-200"
-          accent="text-rose-700"
-        />
+        <div className="grid grid-cols-3 gap-3 mb-5">
+          <StatCard label="Average" value={stats.average.toFixed(2)} />
+          <StatCard label="Round down" value={String(stats.roundedDown)} />
+          <StatCard label="Round up" value={String(stats.roundedUp)} />
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold text-amber-300 uppercase tracking-widest mb-3">
+            Individual votes ({stats.totalVotes})
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {sorted.map((vote, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between px-3 py-2 rounded-xl border border-emerald-800 bg-emerald-950/40"
+              >
+                <span className="text-emerald-300 text-sm truncate pr-2">{vote.voterName}</span>
+                <span className="flex-shrink-0 w-9 h-11 bg-white text-slate-800 font-display font-black rounded-lg flex items-center justify-center text-lg shadow-sm border border-slate-200">
+                  {vote.points}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div>
-        <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">
-          Cards played ({stats.totalVotes})
-        </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {sorted.map((vote, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between p-3 bg-gradient-to-r from-slate-50 to-white rounded-2xl border-2 border-slate-100"
-            >
-              <span className="font-medium text-slate-700 truncate pr-2">
-                {vote.voterName}
-              </span>
-              <span className="flex-shrink-0 w-10 h-12 bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white font-display font-black rounded-lg flex items-center justify-center shadow-sm">
-                {vote.points}
-              </span>
-            </div>
-          ))}
+      {/* Score acceptance */}
+      <div className="bg-emerald-900/60 rounded-2xl p-5 border border-emerald-700/50">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-xs font-semibold text-amber-300 uppercase tracking-widest">
+            {selectedScore != null ? "Accepted score" : isCreator ? "What's the call?" : "Accepted score"}
+          </p>
+          {selectedScore != null && (
+            <span className="w-12 h-14 bg-gradient-to-br from-amber-400 to-yellow-500 text-emerald-950 font-display font-black rounded-xl flex items-center justify-center text-2xl shadow-md">
+              {selectedScore}
+            </span>
+          )}
         </div>
+
+        {isCreator ? (
+          <div className="flex flex-wrap gap-2">
+            {FIBONACCI.map((v) => (
+              <button
+                key={v}
+                onClick={() => onSelectScore(v)}
+                className={`w-12 h-14 rounded-xl font-display font-bold text-xl transition-all ${
+                  selectedScore === v
+                    ? "bg-amber-400 text-emerald-950 shadow-md scale-105"
+                    : "bg-emerald-950/60 text-emerald-300 border border-emerald-700 hover:border-amber-400/60 hover:text-amber-300"
+                }`}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+        ) : selectedScore == null ? (
+          <p className="text-sm text-emerald-600 italic">Host hasn't made the call yet...</p>
+        ) : null}
       </div>
     </div>
   );
 }
 
-function StatCard({
-  label,
-  value,
-  gradient,
-  accent,
-}: {
-  label: string;
-  value: string;
-  gradient: string;
-  accent: string;
-}) {
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div
-      className={`bg-gradient-to-br ${gradient} rounded-2xl p-5 text-center border-2 border-white shadow-sm`}
-    >
-      <p className={`text-xs font-semibold uppercase tracking-wide mb-1 ${accent}`}>
-        {label}
-      </p>
-      <p className={`text-4xl font-display font-black ${accent}`}>{value}</p>
+    <div className="rounded-xl border border-emerald-700/50 bg-emerald-950/50 p-4 text-center">
+      <p className="text-xs text-emerald-500 uppercase tracking-wide mb-1">{label}</p>
+      <p className="text-3xl font-display font-black text-amber-400">{value}</p>
     </div>
   );
 }

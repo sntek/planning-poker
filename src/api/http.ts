@@ -1,4 +1,4 @@
-import type { ApiClient, Channel, Event, Room, Vote, VoteStats } from "./types";
+import type { ApiClient, Channel, Event, Room, RoundData, RoundRecord, Vote, VoteStats } from "./types";
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
@@ -118,6 +118,20 @@ export function createHttpClient(): ApiClient {
       req<void>(`/api/rooms/${roomId}/stop`, { method: "POST" }),
     nextRound: (roomId) =>
       req<void>(`/api/rooms/${roomId}/next`, { method: "POST" }),
+    deleteRoom: (id) => req<void>(`/api/rooms/${id}`, { method: "DELETE" }),
+    setRoundTitle: (roomId, round, title) =>
+      req<void>(`/api/rooms/${roomId}/round-title`, {
+        method: "POST",
+        body: JSON.stringify({ round, title }),
+      }),
+    selectScore: (roomId, round, score) =>
+      req<void>(`/api/rooms/${roomId}/select-score`, {
+        method: "POST",
+        body: JSON.stringify({ round, score }),
+      }),
+    getRoundData: (roomId, round) =>
+      req<RoundData>(`/api/rooms/${roomId}/round-data?round=${round}`),
+    getHistory: (roomId) => req<RoundRecord[]>(`/api/rooms/${roomId}/history`),
     subscribe: (channel, handler) => socket.subscribe(channel, handler),
   };
 }

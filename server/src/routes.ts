@@ -152,6 +152,93 @@ export async function handleApi(req: Request, url: URL): Promise<Response> {
       });
     }
 
+    if (sub === "" && method === "DELETE") {
+      const result = await sql`delete from rooms where id = ${roomId}`;
+      if (result.count === 0) return bad("room not found", 404);
+      broadcast({ type: "rooms" });
+      return new Response(null, { status: 204 });
+    }
+
+    if (sub === "/round-title" && method === "POST") {
+      const body = await readJson(req);
+      const round = int(body.round);
+      const title = typeof body.title === "string" ? body.title.trim().slice(0, 200) : "";
+      if (round == null) return bad("round required");
+      await sql`
+        insert into rounds (room_id, round_number, title)
+        values (${roomId}, ${round}, ${title})
+        on conflict (room_id, round_number) do update set title = excluded.title
+      `;
+      broadcast({ type: "room", roomId });
+      return json({ ok: true });
+    }
+
+    if (sub === "/select-score" && method === "POST") {
+      const body = await readJson(req);
+      const round = int(body.round);
+      const score = int(body.score);
+      if (round == null) return bad("round required");
+      if (score == null) return bad("score required");
+      await sql`
+        insert into rounds (room_id, round_number, selected_score)
+        values (${roomId}, ${round}, ${score})
+        on conflict (room_id, round_number) do update set selected_score = excluded.selected_score
+      `;
+      broadcast({ type: "room", roomId });
+      return json({ ok: true });
+    }
+
+    if (sub === "/history" && method === "GET") {
+      const [room] = await sql<RoomRow[]>`select current_round from rooms where id = ${roomId}`;
+      if (!room) return bad("room not found", 404);
+
+      type HistoryRow = {
+        round_number: number;
+        title: string;
+        selected_score: number | null;
+        vote_count: number;
+        average: number | null;
+      };
+
+      const rows = await sql<HistoryRow[]>`
+        select
+          v_agg.round_number,
+          coalesce(r.title, '')   as title,
+          r.selected_score,
+          v_agg.vote_count,
+          v_agg.average
+        from (
+          select round as round_number, count(*)::int as vote_count, avg(points) as average
+          from votes
+          where room_id = ${roomId}
+          group by round
+        ) v_agg
+        left join rounds r
+          on r.room_id = ${roomId} and r.round_number = v_agg.round_number
+        order by v_agg.round_number asc
+      `;
+
+      return json(
+        rows.map((r) => ({
+          roundNumber: r.round_number,
+          title: r.title,
+          selectedScore: r.selected_score,
+          voteCount: r.vote_count,
+          average: r.average != null ? Number(r.average) : null,
+        })),
+      );
+    }
+
+    if (sub === "/round-data" && method === "GET") {
+      const round = int(Number(url.searchParams.get("round")));
+      if (round == null) return bad("round required");
+      const [row] = await sql<{ title: string; selected_score: number | null }[]>`
+        select coalesce(title, '') as title, selected_score
+        from rounds where room_id = ${roomId} and round_number = ${round}
+      `;
+      return json({ title: row?.title ?? "", selectedScore: row?.selected_score ?? null });
+    }
+
     if (sub === "/vote" && method === "POST") {
       const body = await readJson(req);
       const round = int(body.round);

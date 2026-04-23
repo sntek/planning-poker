@@ -4,7 +4,6 @@ import path from "node:path";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const useMock = env.VITE_USE_MOCK === "1";
   const apiTarget = env.VITE_API_TARGET || "http://localhost:3001";
 
   return {
@@ -14,12 +13,10 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 5173,
-      proxy: useMock
-        ? undefined
-        : {
-            "/api": { target: apiTarget, changeOrigin: true },
-            "/ws": { target: apiTarget, changeOrigin: true, ws: true },
-          },
+      proxy: {
+        "/api": { target: apiTarget, changeOrigin: true },
+        "/ws": { target: apiTarget, changeOrigin: true, ws: true },
+      },
     },
   };
 });
