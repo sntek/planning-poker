@@ -47,13 +47,22 @@ export function PlanningRoom({ roomId, userName, onLeave }: PlanningRoomProps) {
   };
 
   if (room === undefined) {
-    return <div className="py-20 text-center text-gray-400 text-sm">Loading…</div>;
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-4">
+        <span className="text-5xl animate-bounce">🎲</span>
+        <p className="text-slate-600 font-display">Peeking at the table...</p>
+      </div>
+    );
   }
+
   if (room === null) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-12 text-center">
-        <p className="text-gray-500 mb-4">This room no longer exists.</p>
-        <button onClick={onLeave} className="text-sm text-indigo-600 hover:underline">← Back to rooms</button>
+      <div className="bg-white/90 backdrop-blur rounded-3xl shadow-xl p-12 border-2 border-white text-center">
+        <p className="text-5xl mb-3">🕳️</p>
+        <p className="text-slate-700 mb-4">This table has vanished!</p>
+        <button onClick={onLeave} className="px-5 py-2 bg-violet-500 text-white font-semibold rounded-xl hover:bg-violet-600 transition-colors">
+          Back to lobby
+        </button>
       </div>
     );
   }
@@ -61,16 +70,18 @@ export function PlanningRoom({ roomId, userName, onLeave }: PlanningRoomProps) {
   const completedHistory = (history ?? []).filter((r) => r.roundNumber < room.currentRound);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Header card */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-        <div className="flex items-start justify-between gap-4 mb-3">
+      <div className="bg-white/90 backdrop-blur rounded-3xl shadow-xl p-6 border-2 border-white">
+        <div className="flex items-start justify-between mb-4 gap-4">
           <div>
-            <h1 className="text-xl font-display font-semibold text-gray-900">{room.name}</h1>
-            <p className="text-xs text-gray-400 mt-0.5">Round {room.currentRound} · {room.creatorName}</p>
+            <h1 className="text-2xl sm:text-3xl font-display font-bold text-slate-800">{room.name}</h1>
+            <p className="text-sm text-slate-600">
+              Round {room.currentRound} · Hosted by <span className="font-semibold">{room.creatorName}</span>
+            </p>
           </div>
-          <button onClick={onLeave} className="text-sm text-gray-400 hover:text-gray-700 transition-colors mt-0.5">
-            Leave
+          <button onClick={onLeave} className="px-4 py-2 text-slate-500 hover:text-rose-600 font-semibold transition-colors">
+            Leave ←
           </button>
         </div>
 
@@ -82,60 +93,66 @@ export function PlanningRoom({ roomId, userName, onLeave }: PlanningRoomProps) {
         />
 
         {isCreator && (
-          <div className="flex gap-2 mt-4">
+          <div className="flex flex-col sm:flex-row gap-3 mt-5">
             {!room.isVoting ? (
               <button
-                onClick={safeCall(() => api().startVoting(roomId))}
-                className="flex-1 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-700 transition-colors"
+                onClick={safeCall(() => api().startVoting(roomId), "Let's vote! 🗳️")}
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white font-display font-bold rounded-2xl hover:scale-[1.02] active:scale-95 transition-transform shadow-md hover:shadow-lg"
               >
-                Start voting
+                ▶ Start voting
               </button>
             ) : (
               <button
-                onClick={safeCall(() => api().stopVoting(roomId))}
-                className="flex-1 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
+                onClick={safeCall(() => api().stopVoting(roomId), "Cards on the table! 🎴")}
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-display font-bold rounded-2xl hover:scale-[1.02] active:scale-95 transition-transform shadow-md hover:shadow-lg animate-pulse"
               >
-                Reveal cards
+                ✨ Reveal cards
               </button>
             )}
             {!room.isVoting && !!votes?.length && (
               <button
-                onClick={safeCall(() => api().nextRound(roomId))}
-                className="px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-colors"
+                onClick={safeCall(() => api().nextRound(roomId), "Fresh deck! 🔀")}
+                className="px-6 py-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-display font-bold rounded-2xl hover:scale-[1.02] active:scale-95 transition-transform shadow-md hover:shadow-lg"
               >
-                Next round
+                Next round →
               </button>
             )}
           </div>
         )}
 
         {/* Participants */}
-        <div className="mt-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-gray-400">
-              {votes?.length ?? 0} {votes?.length === 1 ? "voter" : "voters"}
-            </span>
-            <div className="flex items-center gap-1.5">
-              <span className={`w-1.5 h-1.5 rounded-full ${room.isVoting ? "bg-indigo-500 animate-pulse" : "bg-gray-300"}`} />
-              <span className="text-xs text-gray-400">{room.isVoting ? "Voting" : "Waiting"}</span>
+        <div className="mt-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-slate-700">
+              At the table ({votes?.length ?? 0})
+            </h3>
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${room.isVoting ? "bg-emerald-500 animate-pulse" : "bg-gray-400"}`} />
+              <span className="text-sm text-slate-600">{room.isVoting ? "Voting in progress" : "Waiting to start"}</span>
             </div>
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            {!votes?.length && <span className="text-xs text-gray-300 italic">No votes yet</span>}
-            {votes?.map((vote) => (
-              <span
-                key={vote.id}
-                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
-                  vote.voterName === userName
-                    ? "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200"
-                    : "bg-gray-100 text-gray-600"
-                }`}
-              >
-                {vote.voterName}
-                {!room.isVoting && <span className="font-bold">{vote.points}</span>}
-                {room.isVoting && <span className="opacity-40">🎴</span>}
-              </span>
-            ))}
+          <div className="flex flex-wrap gap-2">
+            {!votes?.length && <p className="text-sm text-slate-400 italic">Nobody&rsquo;s picked a card yet...</p>}
+            {votes?.map((vote) => {
+              const isMe = vote.voterName === userName;
+              return (
+                <div
+                  key={vote.id}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-all ${
+                    isMe
+                      ? "bg-violet-100 text-violet-800 border-violet-300"
+                      : "bg-slate-100 text-slate-700 border-slate-200"
+                  }`}
+                >
+                  {vote.voterName}
+                  {!room.isVoting ? (
+                    <span className="ml-2 px-2 py-0.5 bg-white rounded-full text-violet-700 font-bold">{vote.points}</span>
+                  ) : (
+                    <span className="ml-2">🎴</span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -148,11 +165,18 @@ export function PlanningRoom({ roomId, userName, onLeave }: PlanningRoomProps) {
           stats={voteStats}
           selectedScore={roundData?.selectedScore ?? null}
           isCreator={isCreator}
-          onSelectScore={(score) => api().selectScore(roomId, room.currentRound, score).catch(() => toast.error("Couldn't save score"))}
+          onSelectScore={(score) =>
+            api().selectScore(roomId, room.currentRound, score).catch(() => toast.error("Couldn't save score"))
+          }
         />
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-12 text-center text-gray-400 text-sm">
-          {isCreator ? 'Press "Start voting" when ready.' : "Waiting for the host to start\u2026"}
+        <div className="bg-white/90 backdrop-blur rounded-3xl shadow-xl p-12 border-2 border-white text-center">
+          <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-4xl animate-pulse">⏳</span>
+          </div>
+          <p className="text-slate-700 font-display text-lg">
+            {isCreator ? 'Press "Start voting" when the team is ready' : "Waiting for the host to deal..."}
+          </p>
         </div>
       )}
 
@@ -169,7 +193,6 @@ function RoundTitleInput({
 }: { roomId: string; round: number; currentTitle: string; isCreator: boolean }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
-  const ref = useRef<HTMLInputElement>(null);
 
   const commit = async () => {
     setEditing(false);
@@ -180,31 +203,30 @@ function RoundTitleInput({
 
   if (!isCreator) {
     return currentTitle
-      ? <p className="text-sm text-gray-500 italic">"{currentTitle}"</p>
+      ? <p className="text-slate-500 text-sm italic mb-1">"{currentTitle}"</p>
       : null;
   }
 
   if (editing) {
     return (
       <input
-        ref={ref}
-        value={draft}
         autoFocus
+        value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={() => void commit()}
         onKeyDown={(e) => { if (e.key === "Enter") void commit(); if (e.key === "Escape") setEditing(false); }}
         maxLength={200}
         placeholder="What are we estimating?"
-        className="w-full text-sm px-3 py-2 rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-2 focus:ring-gray-100 outline-none text-gray-700 placeholder:text-gray-300"
+        className="w-full mb-1 px-4 py-2 rounded-xl bg-slate-50 border-2 border-violet-300 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 outline-none transition-all text-slate-700 text-sm"
       />
     );
   }
 
   return (
-    <button onClick={() => { setDraft(currentTitle); setEditing(true); }} className="text-sm text-left group">
+    <button onClick={() => { setDraft(currentTitle); setEditing(true); }} className="block text-sm text-left mb-1 group">
       {currentTitle
-        ? <span className="text-gray-500 italic">"{currentTitle}" <span className="opacity-0 group-hover:opacity-100 text-gray-300 text-xs transition-opacity">edit</span></span>
-        : <span className="text-gray-300 hover:text-gray-400 transition-colors">+ Round title</span>
+        ? <span className="text-slate-500 italic">"{currentTitle}" <span className="opacity-0 group-hover:opacity-60 text-violet-400 text-xs transition-opacity">edit</span></span>
+        : <span className="text-slate-400 hover:text-violet-400 transition-colors">+ Add a round title...</span>
       }
     </button>
   );
@@ -215,37 +237,42 @@ function RoundTitleInput({
 function RoundHistory({ records }: { records: RoundRecord[] }) {
   const [open, setOpen] = useState(true);
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div className="bg-white/90 backdrop-blur rounded-3xl shadow-xl border-2 border-white overflow-hidden">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center justify-between px-6 py-4 hover:bg-white/60 transition-colors"
       >
-        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">History</span>
-        <span className="text-gray-300 text-xs">{open ? "▲" : "▼"}</span>
+        <span className="font-display font-bold text-slate-700 flex items-center gap-2">
+          <span>📋</span> Round history ({records.length})
+        </span>
+        <span className="text-slate-400 text-sm">{open ? "▲" : "▼"}</span>
       </button>
       {open && (
-        <div className="border-t border-gray-100">
+        <div className="border-t border-slate-100">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-gray-400 border-b border-gray-100">
-                <th className="px-5 py-2 font-medium">#</th>
-                <th className="px-2 py-2 font-medium">Title</th>
-                <th className="px-2 py-2 font-medium text-right">Avg</th>
-                <th className="px-5 py-2 font-medium text-right">Score</th>
+              <tr className="text-left text-xs text-slate-400 border-b border-slate-100">
+                <th className="px-6 py-2 font-semibold">#</th>
+                <th className="px-2 py-2 font-semibold">Title</th>
+                <th className="px-2 py-2 font-semibold text-right">Avg</th>
+                <th className="px-6 py-2 font-semibold text-right">Score</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-slate-50">
               {records.map((r) => (
-                <tr key={r.roundNumber} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-5 py-3 text-gray-400 font-mono">{r.roundNumber}</td>
-                  <td className="px-2 py-3 text-gray-600 max-w-[200px] truncate">
-                    {r.title || <span className="text-gray-300 italic">untitled</span>}
+                <tr key={r.roundNumber} className="hover:bg-slate-50/60 transition-colors">
+                  <td className="px-6 py-3 text-slate-400 font-mono">{r.roundNumber}</td>
+                  <td className="px-2 py-3 text-slate-600 max-w-[200px] truncate">
+                    {r.title || <span className="text-slate-300 italic">untitled</span>}
                   </td>
-                  <td className="px-2 py-3 text-gray-400 text-right">
+                  <td className="px-2 py-3 text-slate-500 text-right">
                     {r.average != null ? r.average.toFixed(1) : "—"}
                   </td>
-                  <td className="px-5 py-3 text-right font-semibold text-gray-900">
-                    {r.selectedScore ?? <span className="text-gray-300">—</span>}
+                  <td className="px-6 py-3 text-right">
+                    {r.selectedScore != null
+                      ? <span className="font-display font-bold text-violet-700">{r.selectedScore}</span>
+                      : <span className="text-slate-300">—</span>
+                    }
                   </td>
                 </tr>
               ))}
@@ -259,7 +286,7 @@ function RoundHistory({ records }: { records: RoundRecord[] }) {
 
 function celebrate() {
   const end = Date.now() + 1200;
-  const colors = ["#6366f1", "#8b5cf6", "#a78bfa", "#c4b5fd", "#e0e7ff"];
+  const colors = ["#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#3b82f6"];
   (function frame() {
     confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0, y: 0.7 }, colors });
     confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1, y: 0.7 }, colors });

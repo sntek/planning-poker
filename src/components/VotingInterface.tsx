@@ -8,11 +8,11 @@ interface VotingInterfaceProps {
 
 export function VotingInterface({ fibonacci, selectedValue, onVote }: VotingInterfaceProps) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sm:p-6">
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4 text-center">
+    <div className="bg-white/90 backdrop-blur rounded-3xl shadow-xl p-6 sm:p-8 border-2 border-white">
+      <h2 className="text-xl sm:text-2xl font-display font-bold text-slate-800 mb-5 text-center">
         Pick your card
-      </p>
-      <div className="grid grid-cols-5 sm:grid-cols-10 gap-2 sm:gap-3">
+      </h2>
+      <div className="grid grid-cols-5 sm:grid-cols-10 gap-3 sm:gap-4">
         {fibonacci.map((value, i) => {
           const selected = selectedValue === value;
           const suit = SUITS[i % SUITS.length];
@@ -21,22 +21,22 @@ export function VotingInterface({ fibonacci, selectedValue, onVote }: VotingInte
             <button
               key={value}
               onClick={() => onVote(value)}
-              className={`relative aspect-[3/4] rounded-xl font-display font-black text-2xl sm:text-3xl transition-all transform-gpu ${
+              className={`group relative aspect-[3/4] rounded-2xl font-display font-black text-3xl sm:text-4xl transition-all transform-gpu ${
                 selected
-                  ? "bg-gradient-to-br from-violet-500 via-fuchsia-500 to-rose-500 text-white shadow-xl scale-105 -translate-y-1.5 ring-4 ring-violet-200"
-                  : "bg-white text-gray-800 border border-gray-200 shadow-sm hover:shadow-md hover:-translate-y-1.5 hover:border-gray-300"
+                  ? "bg-gradient-to-br from-violet-500 via-fuchsia-500 to-rose-500 text-white shadow-2xl scale-105 -translate-y-2 ring-4 ring-violet-200"
+                  : "bg-white text-slate-800 shadow-md hover:shadow-xl hover:-translate-y-2 hover:rotate-[-2deg] border-2 border-slate-200 hover:border-violet-300"
               }`}
             >
-              <span className={`absolute top-1 left-1.5 text-[10px] font-bold ${selected ? "text-white/70" : red ? "text-rose-400" : "text-gray-400"}`}>{suit}</span>
-              <span className={`absolute bottom-1 right-1.5 text-[10px] font-bold rotate-180 ${selected ? "text-white/70" : red ? "text-rose-400" : "text-gray-400"}`}>{suit}</span>
-              {value}
+              <span className={`absolute top-1 left-2 text-xs font-bold ${selected ? "text-white/80" : red ? "text-rose-500" : "text-slate-500"}`}>{suit}</span>
+              <span className={`absolute bottom-1 right-2 text-xs font-bold rotate-180 ${selected ? "text-white/80" : red ? "text-rose-500" : "text-slate-500"}`}>{suit}</span>
+              <span className="inline-block">{value}</span>
             </button>
           );
         })}
       </div>
       {selectedValue !== undefined && (
-        <p className="text-center text-xs text-gray-400 mt-4">
-          You picked <span className="font-bold text-gray-600">{selectedValue}</span> — tap to change
+        <p className="text-center text-sm text-slate-600 mt-5">
+          You&rsquo;re holding <span className="font-display font-bold text-violet-700 text-base">{selectedValue}</span>. Change your mind? Tap another card.
         </p>
       )}
     </div>

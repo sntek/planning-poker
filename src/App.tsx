@@ -16,16 +16,22 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f5f5f7]">
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-200 h-14 flex items-center justify-between px-6">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">🃏</span>
-          <span className="font-display font-semibold text-gray-900 text-lg">Planning Poker</span>
+    <div className="relative min-h-screen flex flex-col overflow-hidden bg-gradient-to-br from-sky-100 via-violet-100 to-rose-100">
+      <FloatingShapes />
+
+      <header className="relative sticky top-0 z-10 bg-white/80 backdrop-blur-sm h-16 flex justify-between items-center border-b border-white/60 shadow-sm px-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-violet-500 via-fuchsia-500 to-rose-500 rounded-xl flex items-center justify-center shadow-md rotate-[-6deg] hover:rotate-[6deg] transition-transform cursor-default">
+            <span className="text-white text-xl">🃏</span>
+          </div>
+          <h1 className="text-2xl font-display font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 bg-clip-text text-transparent">
+            Planning Poker
+          </h1>
         </div>
-        <div className="flex items-center gap-4 text-sm">
+        <div className="flex items-center gap-4">
           {userName && (
-            <span className="text-gray-500">
-              {userName}
+            <span className="text-sm text-gray-600">
+              Hey, <span className="font-bold text-violet-700">{userName}</span>
             </span>
           )}
           {userName && (
@@ -35,7 +41,7 @@ export default function App() {
                 setUserName(null);
                 setCurrentRoomId(null);
               }}
-              className="text-gray-400 hover:text-gray-700 transition-colors"
+              className="text-sm text-gray-500 hover:text-rose-600 font-medium transition-colors"
             >
               Switch name
             </button>
@@ -43,8 +49,8 @@ export default function App() {
         </div>
       </header>
 
-      <main className="flex-1 flex items-start justify-center p-6 sm:p-10">
-        <div className="w-full max-w-2xl">
+      <main className="relative flex-1 flex items-start justify-center p-4 sm:p-8">
+        <div className="w-full max-w-4xl mx-auto">
           {!userName ? (
             <NamePrompt onSubmit={(name) => {
               localStorage.setItem(NAME_KEY, name);
@@ -62,7 +68,27 @@ export default function App() {
         </div>
       </main>
 
-      <Toaster position="top-center" toastOptions={{ duration: 2500 }} />
+      <Toaster position="top-center" toastOptions={{ className: "font-body", duration: 2500 }} />
+    </div>
+  );
+}
+
+function FloatingShapes() {
+  const shapes = [
+    { size: "w-64 h-64", color: "bg-violet-300/40", pos: "-top-20 -left-20", delay: "0s" },
+    { size: "w-80 h-80", color: "bg-rose-300/40",   pos: "top-1/3 -right-32",  delay: "2s" },
+    { size: "w-56 h-56", color: "bg-sky-300/40",    pos: "bottom-0 left-1/4",  delay: "4s" },
+    { size: "w-72 h-72", color: "bg-amber-200/40",  pos: "-bottom-20 right-1/3", delay: "1s" },
+  ];
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+      {shapes.map((s, i) => (
+        <div
+          key={i}
+          className={`absolute ${s.size} ${s.color} ${s.pos} rounded-full blur-3xl animate-float`}
+          style={{ animationDelay: s.delay }}
+        />
+      ))}
     </div>
   );
 }
